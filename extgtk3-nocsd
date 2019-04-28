@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# extgtk3-nocsd - Wrapper to apply gtk3-nocsd to application and configs!
+#
+# Usage: extgtk3-nocsd <application>
+#
+# Call this wrapper directly with the program to call as its arguments.
+#
+
+# Find where libgtk3-nocsd is located
+GTK3_NOCSD=$(ldconfig -p | grep libgtk3-nocsd.so | awk '{print $4}')
+
+# Preloads libgtk3-nocsd
+export LD_PRELOAD="${GTK3_NOCSD}${LD_PRELOAD:+:$LD_PRELOAD}"
+
+# Makes a new config dir
+if [ -n "$XDG_CONFIG_HOME" ]; then
+  XDG_CONFIG_HOME_TMP="$XDG_CONFIG_HOME/$1"
+else
+  XDG_CONFIG_HOME_TMP="$HOME/.config/$1"
+fi
+mkdir -p "XDG_CONFIG_HOME_TMP/gtk-3.0"
+
+# Changes GTK3 configuration to hide CSD label and menu button
+echo 'headerbar,.titlebar:not(headerbar) {color: rgba(0,0,0,0);}' > "$XDG_CONFIG_HOME_TMP/gtk-3.0/gtk.css"
+cp "$XDG_CONFIG_HOME/gtk-3.0/settings.ini" "$XDG_CONFIG_HOME_TMP/gtk-3.0/"
+cp "$XDG_CONFIG_HOME/gtk-3.0/bookmarks" "$XDG_CONFIG_HOME_TMP/gtk-3.0/"
+echo 'gtk-decoration-layout=none' >> "$XDG_CONFIG_HOME_TMP/gtk-3.0/settings.ini"
+
+export XDG_CONFIG_HOME="$XDG_CONFIG_HOME_TMP"
+APPNAME="$01"
+shift
+$APPNAME "$@"
